@@ -53,7 +53,6 @@ std::istream& operator>>(std::istream& is, access_mode& am);
 
 struct shm_segment {
 	int ID;
-	// key_t KEY;
 	access_mode MODE;
 	std::string OWNER, GROUP;
 	int CPID, LPID;
