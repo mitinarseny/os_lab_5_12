@@ -26,4 +26,7 @@ make
 
 # in separate shell
 ./client
+
+# in separate shell
+./client2
 ```
