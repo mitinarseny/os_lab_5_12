@@ -25,14 +25,17 @@ key_t get_key(const std::string& path) {
 }
 
 int get_shmem(key_t key, std::size_t size, int flags) {
-	auto id = ::shmget(key, size, flags | 0666);
-	if (id == -1)
+	int id;
+	while ((id = ::shmget(key, size, flags | 0666)) == -1) {
+		if (errno == ENOENT)
+			continue;
 		throw std::system_error(errno, std::system_category(), "shmget");
+	}
 	return id;
 }
 
 int create_shmem(key_t key, std::size_t size) {
-	return get_shmem(key, size, IPC_CREAT | IPC_EXCL);
+	return get_shmem(key, size, IPC_CREAT);
 }
 
 void delete_shmem(int shm_id) {
@@ -48,14 +51,17 @@ byte_t* attach_shmem(int shm_id) {
 }
 
 int get_sem(key_t key, int nsems, int flags) {
-	auto id = ::semget(key, nsems, flags | 0666);
-	if (id == -1)
+	int id;
+	while ((id = ::semget(key, nsems, flags | 0666)) == -1) {
+		if (errno == ENOENT)
+			continue;
 		throw std::system_error(errno, std::system_category(), "semget");
+	}
 	return id;
 }
 
 int create_sem(key_t key, int nsems) {
-	return get_sem(key, nsems, IPC_CREAT | IPC_EXCL);
+	return get_sem(key, nsems, IPC_CREAT);
 }
 
 void delete_sem(int sem_id, int semnum) {

@@ -12,3 +12,6 @@ target_link_libraries(server shared)
 
 add_executable(client client.cpp)
 target_link_libraries(client shared)
+
+add_executable(client2 client2.cpp)
+target_link_libraries(client2 shared)

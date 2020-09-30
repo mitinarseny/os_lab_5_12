@@ -36,25 +36,24 @@ std::vector<shm_segment> get_shm_segments() {
 }
 
 int main() try {
-	Resources res;
-	std::cout << "SHM_ID: " << res.shm_id << ", SEM_ID: " << res.sem_id << std::endl;
+	int shm_id = get_shmem(get_key(MEM_PATH), SHMEM_SIZE);
+	int sem_id = get_sem(get_key(SEM_PATH), 1);
+	std::cout << "SHM_ID: " << shm_id << ", SEM_ID: " << sem_id << std::endl;
 
-	byte_t* ptr = attach_shmem(res.shm_id);
+	byte_t* ptr = attach_shmem(shm_id);
 	std::cout << "ATTACHED SHARED MEMORY: 0x" << std::hex << uintptr_t(ptr) << std::dec << std::endl;
+	
+	sem_add(sem_id, 0, -2); // wait for owner access modes
 
-	auto shm_segs = get_shm_segments();
-	std::cout << "got segs, size: " << shm_segs.size() << std::endl;
-	ptr = write_vector(shm_segs, ptr);
-
-	sem_add(res.sem_id, 0, 1); // release sem
-	sem_add(res.sem_id, 0, -3); // wait
-
-	std::cout << "Last attached processes:" << std::endl;
-	for (const auto& s: shm_segs) {
-		std::cout << "\tID: " << s.ID
-			<< ", LPID: " << s.LPID
-			<< ", ATIME: " << std::put_time(&s.ATIME, "%H:%M:%S") << std::endl;
+	auto v = read_vector<shm_segment>(ptr);
+	ptr += sizeof(std::size_t) + sizeof(shm_segment) * v.size();
+	auto owner_access_modes = read_vector<shm_owner_access_mode>(ptr);
+	std::cout << "got " << owner_access_modes.size() << " access modes:" << std::endl;
+	for (const shm_owner_access_mode& am: owner_access_modes) {
+		std::cout << '\t' << am << std::endl;
 	}
+
+	sem_add(sem_id, 0, 3); // release sem
 
 	return EXIT_SUCCESS;
 } catch (const std::exception& e) {
